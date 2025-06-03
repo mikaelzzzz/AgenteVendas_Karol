@@ -11,6 +11,11 @@ NOTION_VERSION   = "2022-06-28"
 
 app = FastAPI()
 
+@app.get("/")
+async def root():
+    return {"message": "API is running"}
+
+@app.post("/webhook")
 async def webhook(request: Request):
     data = await request.json()
 
