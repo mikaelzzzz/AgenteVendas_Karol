@@ -1,0 +1,36 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+env/
+venv/
+ENV/
+
+# PyInstaller
+dist/
+build/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Environments
+.env
+.venv
+
+# Notion API keys
+.env
+
+# macOS
+.DS_Store
+
+# Logs
+*.log
+
+# Local files
+*.local 
