@@ -22,11 +22,10 @@ async def webhook(request: Request):
     nome        = data.get('nome')
     email       = data.get('email')
     whatsapp    = data.get('whatsapp')
-    nivel        = data.get('nivel')
-    profissao    = data.get('profissao')
-    indicacao    = data.get('indicacao')
-    motivo       = data.get('motivo')
-    historico    = data.get('historico')
+    profissao   = data.get('profissao')
+    indicacao   = data.get('indicacao')
+    motivo      = data.get('motivo')
+    historico   = data.get('historico')
     disponibilidade = data.get('disponibilidade')
 
     if not all([nome, email, whatsapp]):
@@ -41,21 +40,13 @@ async def webhook(request: Request):
     payload = {
         "parent": { "database_id": NOTION_DATABASE_ID },
         "properties": {
-            "Nome": {
+            "Cliente": {
                 "title": [
                     { "text": { "content": nome } }
                 ]
             },
-            "Email": { "email": email },
-            "WhatsApp": {
-                "rich_text": [
-                    { "text": { "content": whatsapp } }
-                ]
-            },
-            "Nível": {
-                "rich_text": [
-                    { "text": { "content": nivel or "" } }
-                ]
+            "Email": { 
+                "email": email 
             },
             "Profissão": {
                 "rich_text": [
@@ -67,19 +58,24 @@ async def webhook(request: Request):
                     { "text": { "content": indicacao or "" } }
                 ]
             },
-            "Motivo": {
-                "rich_text": [
-                    { "text": { "content": motivo or "" } }
-                ]
-            },
-            "Histórico": {
+            "Histórico Inglês": {
                 "rich_text": [
                     { "text": { "content": historico or "" } }
                 ]
             },
-            "Disponibilidade": {
+            "Disponibilidade Horário": {
                 "rich_text": [
                     { "text": { "content": disponibilidade or "" } }
+                ]
+            },
+            "Telefone": {
+                "rich_text": [
+                    { "text": { "content": whatsapp or "" } }
+                ]
+            },
+            "Real Motivação": {
+                "rich_text": [
+                    { "text": { "content": motivo or "" } }
                 ]
             }
         }
