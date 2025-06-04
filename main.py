@@ -12,23 +12,22 @@ NOTION_DATABASE_ID = os.getenv("NOTION_DATABASE_ID")
 NOTION_API_URL     = "https://api.notion.com/v1/pages"
 NOTION_VERSION     = "2022-06-28"
 
-# --- Z-API – dois modos possíveis -------------------------------------
-ZAPI_URL            = os.getenv("ZAPI_URL")            # modo 1: endpoint completo
-ZAPI_INSTANCE_ID    = os.getenv("ZAPI_INSTANCE_ID")    # modo 2: instância + token
-ZAPI_TOKEN          = os.getenv("ZAPI_TOKEN")
-ZAPI_SECURITY_TOKEN = os.getenv("ZAPI_SECURITY_TOKEN")
+# --- Z-API – **APENAS MODO 2 (instância + token)** --------------------
+ZAPI_INSTANCE_ID    = os.getenv("ZAPI_INSTANCE_ID")    # obrigatório
+ZAPI_TOKEN          = os.getenv("ZAPI_TOKEN")          # obrigatório
+ZAPI_SECURITY_TOKEN = os.getenv("ZAPI_SECURITY_TOKEN") # opcional (Client-Token)
 
 # --- Alertas e OpenAI -------------------------------------------------
 ALERT_PHONES = [
     os.getenv("ALERT_PHONE", "5511975578651"),  # principal (pode vir do .env)
-    "5511957708562",                             # novo número 1
-    "5511955911993",                             # novo número 2
+    "5511957708562",
+    "5511955911993",
 ]
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 OPENAI_MODEL   = os.getenv("OPENAI_MODEL", "gpt-3.5-turbo")
 
-# Cliente OpenAI (SDK >=1.0)
+# Cliente OpenAI (SDK ≥ 1.0)
 client = OpenAI() if OPENAI_API_KEY else None
 
 app = FastAPI()
@@ -55,7 +54,7 @@ def classificar_lead_basico(indicacao: str, motivo: str) -> str:
 
 
 def classificar_lead(indicacao: str, motivo: str) -> str:
-    """Tenta usar ChatGPT; se falhar ou não houver chave, recorre às regras simples."""
+    """Tenta usar ChatGPT; se indisponível, aplica as regras básicas."""
     if client:
         prompt = (
             "Você é um agente de vendas experiente. "
@@ -82,29 +81,28 @@ def classificar_lead(indicacao: str, motivo: str) -> str:
     return classificar_lead_basico(indicacao, motivo)
 
 # ---------------------------------------------------------------------
-# 2) ENVIO DE WHATSAPP (suporta URL único ou instância/token)
-# ---------------------------------------------------------------------
-
-def _build_zapi_url() -> tuple[str | None, dict]:
-    if ZAPI_URL:  # Modo 1
-        return ZAPI_URL, {}
-    if ZAPI_INSTANCE_ID and ZAPI_TOKEN:  # Modo 2
-        url = (
-            f"https://api.z-api.io/instances/{ZAPI_INSTANCE_ID}/"
-            f"token/{ZAPI_TOKEN}/send-text"
-        )
-        headers = {"Client-Token": ZAPI_SECURITY_TOKEN} if ZAPI_SECURITY_TOKEN else {}
-        return url, headers
-    return None, {}
-
+# 2) ENVIO DE WHATSAPP (somente instância + token) ---------------------
 
 def send_whatsapp_message(phone: str, message: str) -> None:
-    url, headers = _build_zapi_url()
-    if not url:
-        print("[INFO] Z-API não configurado; mensagem não enviada.")
+    if not (ZAPI_INSTANCE_ID and ZAPI_TOKEN):
+        print("[INFO] Z-API Modo 2 não configurado; mensagem não enviada.")
         return
+
+    url = (
+        f"https://api.z-api.io/instances/{ZAPI_INSTANCE_ID}/"
+        f"token/{ZAPI_TOKEN}/send-text"
+    )
+    headers = {"Client-Token": ZAPI_SECURITY_TOKEN} if ZAPI_SECURITY_TOKEN else {}
+
     try:
-        requests.post(url, json={"phone": phone, "message": message}, headers=headers, timeout=10)
+        resp = requests.post(
+            url,
+            json={"phone": phone, "message": message},
+            headers=headers,
+            timeout=10,
+        )
+        if resp.status_code != 200:
+            print(f"[WARN] Z-API resposta {resp.status_code}: {resp.text[:120]}")
     except Exception as exc:
         print(f"[WARN] Erro ao enviar WhatsApp: {exc}")
 
@@ -130,16 +128,15 @@ def gerar_mensagem_alto(**info) -> str:
         except Exception as exc:
             print(f"[WARN] Falha ao gerar mensagem com ChatGPT: {exc}")
 
-    linhas = ["Lead com alta chance de fechar negócio!"]
+    partes = ["Lead com alta chance de fechar negócio!"]
     for k, v in info.items():
         if v:
-            linhas.append(f"{k.capitalize()}: {v}")
-    return "\n".join(linhas)
+            partes.append(f"{k.capitalize()}: {v}")
+    return "\n".join(partes)
 
 # ---------------------------------------------------------------------
 # 4) ROTAS FASTAPI
 # ---------------------------------------------------------------------
-
 
 @app.get("/")
 async def root():
@@ -189,7 +186,7 @@ async def webhook(request: Request):
     }
     notion_resp = requests.post(NOTION_API_URL, headers=headers, json=notion_payload)
 
-        # --- Se for Alto, dispara alerta no WhatsApp ----------------------
+    # --- Se for Alto, dispara alerta no WhatsApp ----------------------
     if nivel == "Alto":
         mensagem = gerar_mensagem_alto(
             nome=nome,
@@ -204,5 +201,4 @@ async def webhook(request: Request):
             send_whatsapp_message(phone, mensagem)
 
     if notion_resp.status_code in (200, 201):
-        return {"message": "Dados enviados para o Notion com sucesso."}
-    return {"error": notion_resp.text}, notion_resp.status_code
+        return {"message": "Dados enviados para
