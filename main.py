@@ -20,9 +20,9 @@ ZAPI_SECURITY_TOKEN = os.getenv("ZAPI_SECURITY_TOKEN")
 
 # --- Alertas e OpenAI -------------------------------------------------
 ALERT_PHONES = [
-    os.getenv("ALERT_PHONE", "5511975578651"),  # principal (pode vir do .env)
-    "5511957708562",                             # novo número 1
-    "5511955911993",                             # novo número 2
+    os.getenv("ALERT_PHONE_MAIN", "5511975578651"),
+    os.getenv("ALERT_PHONE_EXTRA1", "5511957708562"),
+    os.getenv("ALERT_PHONE_EXTRA2", "5511955911993"),
 ]
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
