@@ -13,6 +13,7 @@ NOTION_VERSION   = "2022-06-28"
 ZAPI_INSTANCE_ID = os.getenv("ZAPI_INSTANCE_ID")
 ZAPI_TOKEN = os.getenv("ZAPI_TOKEN")
 ZAPI_SECURITY_TOKEN = os.getenv("ZAPI_SECURITY_TOKEN")
+ALERT_PHONE = os.getenv("ALERT_PHONE", "11975578651")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-3.5-turbo")
 
@@ -217,7 +218,7 @@ async def webhook(request: Request):
             motivo=motivo,
             historico=historico,
         )
-        send_whatsapp_message("11975578651", mensagem)
+        send_whatsapp_message(ALERT_PHONE, mensagem)
 
     if response.status_code in (200, 201):
         return {"message": "Dados enviados para o Notion com sucesso."}
