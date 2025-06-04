@@ -6,9 +6,11 @@ Esta API recebe dados de um agente de vendas, registra as informações no Notio
 
 - `NOTION_API_KEY` – token de acesso à API do Notion.
 - `NOTION_DATABASE_ID` – ID do banco de dados onde os leads serão armazenados.
-- `ZAPI_URL` – endpoint completo para envio de mensagens pelo Z-API (opcional).
+- `ZAPI_INSTANCE_ID` – ID da instância para envio de mensagens pelo Z-API.
+- `ZAPI_TOKEN` – token da instância no Z-API.
+- `ZAPI_SECURITY_TOKEN` – token de segurança da conta usado no cabeçalho `Client-Token`.
 
-Caso `ZAPI_URL` esteja configurada e o lead seja classificado como **Alto**, uma mensagem é enviada para `5511975578651` informando os detalhes do cliente.
+Se todas as variáveis do Z-API estiverem configuradas e o lead for classificado como **Alto**, uma mensagem é enviada para `11975578651` com os detalhes do cliente.
 
 ## Regras de qualificação
 

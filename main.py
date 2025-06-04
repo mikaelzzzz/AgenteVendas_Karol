@@ -9,7 +9,9 @@ NOTION_API_KEY   = os.getenv("NOTION_API_KEY")
 NOTION_DATABASE_ID = os.getenv("NOTION_DATABASE_ID")
 NOTION_API_URL   = "https://api.notion.com/v1/pages"
 NOTION_VERSION   = "2022-06-28"
-ZAPI_URL = os.getenv("ZAPI_URL")  # Full endpoint for sending WhatsApp messages
+ZAPI_INSTANCE_ID = os.getenv("ZAPI_INSTANCE_ID")
+ZAPI_TOKEN = os.getenv("ZAPI_TOKEN")
+ZAPI_SECURITY_TOKEN = os.getenv("ZAPI_SECURITY_TOKEN")
 
 app = FastAPI()
 
@@ -36,12 +38,17 @@ def classificar_lead(indicacao: str, motivo: str) -> str:
 
 
 def send_whatsapp_message(phone: str, message: str) -> None:
-    """Envia mensagem via Z-API se a URL estiver configurada."""
-    if not ZAPI_URL:
+    """Envia mensagem via Z-API se as variáveis estiverem configuradas."""
+    if not all([ZAPI_INSTANCE_ID, ZAPI_TOKEN, ZAPI_SECURITY_TOKEN]):
         return
+    url = (
+        f"https://api.z-api.io/instances/{ZAPI_INSTANCE_ID}/"
+        f"token/{ZAPI_TOKEN}/send-text"
+    )
+    headers = {"Client-Token": ZAPI_SECURITY_TOKEN}
     payload = {"phone": phone, "message": message}
     try:
-        requests.post(ZAPI_URL, json=payload, timeout=10)
+        requests.post(url, json=payload, headers=headers, timeout=10)
     except Exception as exc:
         print(f"Erro ao enviar mensagem: {exc}")
 
@@ -129,7 +136,7 @@ async def webhook(request: Request):
             "Lead com alta chance de fechar negócio!\n"
             f"Nome: {nome}\nEmail: {email}\nWhatsApp: {whatsapp}"
         )
-        send_whatsapp_message("5511975578651", mensagem)
+        send_whatsapp_message("11975578651", mensagem)
 
     if response.status_code in (200, 201):
         return {"message": "Dados enviados para o Notion com sucesso."}
