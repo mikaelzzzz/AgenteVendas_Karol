@@ -186,7 +186,7 @@ async def webhook(request: Request):
     }
     notion_resp = requests.post(NOTION_API_URL, headers=headers, json=notion_payload)
 
-    # --- Se for Alto, dispara alerta no WhatsApp ----------------------
+        # --- Se for Alto, dispara alerta no WhatsApp ----------------------
     if nivel == "Alto":
         mensagem = gerar_mensagem_alto(
             nome=nome,
@@ -200,6 +200,7 @@ async def webhook(request: Request):
         for phone in ALERT_PHONES:
             send_whatsapp_message(phone, mensagem)
 
-        if notion_resp.status_code in (200, 201):
+    # --- Resposta final ---------------------------------------------
+    if notion_resp.status_code in (200, 201):
         return {"message": "Dados enviados para o Notion com sucesso."}
     return {"error": notion_resp.text}, notion_resp.status_code
