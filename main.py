@@ -2,7 +2,7 @@ from fastapi import FastAPI, Request
 import requests
 import os
 from dotenv import load_dotenv
-import openai
+from openai import OpenAI
 
 load_dotenv()
 
@@ -20,13 +20,16 @@ ZAPI_SECURITY_TOKEN = os.getenv("ZAPI_SECURITY_TOKEN")
 
 # --- Alertas e OpenAI -------------------------------------------------
 ALERT_PHONES = [
-    os.getenv("ALERT_PHONE_MAIN", "5511975578651"),
-    os.getenv("ALERT_PHONE_EXTRA1", "5511957708562"),
-    os.getenv("ALERT_PHONE_EXTRA2", "5511955911993"),
+    os.getenv("ALERT_PHONE", "5511975578651"),  # principal (pode vir do .env)
+    "5511957708562",                             # novo número 1
+    "5511955911993",                             # novo número 2
 ]
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 OPENAI_MODEL   = os.getenv("OPENAI_MODEL", "gpt-3.5-turbo")
+
+# Cliente OpenAI (SDK >=1.0)
+client = OpenAI(api_key=OPENAI_API_KEY) if OPENAI_API_KEY else None
 
 app = FastAPI()
 
@@ -52,9 +55,8 @@ def classificar_lead_basico(indicacao: str, motivo: str) -> str:
 
 
 def classificar_lead(indicacao: str, motivo: str) -> str:
-    """Tenta usar ChatGPT; se falhar (ou não houver chave) recorre às regras simples."""
-    if OPENAI_API_KEY:
-        openai.api_key = OPENAI_API_KEY
+    """Tenta usar ChatGPT; se falhar ou não houver chave, recorre às regras simples."""
+    if client:
         prompt = (
             "Você é um agente de vendas experiente. "
             "Classifique o lead como Alto, Médio ou Baixo seguindo as regras: "
@@ -65,7 +67,7 @@ def classificar_lead(indicacao: str, motivo: str) -> str:
             f"Indicação: {indicacao}\nMotivo: {motivo}"
         )
         try:
-            resp = openai.ChatCompletion.create(
+            resp = client.chat.completions.create(
                 model=OPENAI_MODEL,
                 messages=[{"role": "user", "content": prompt}],
                 max_tokens=5,
@@ -111,15 +113,14 @@ def send_whatsapp_message(phone: str, message: str) -> None:
 # ---------------------------------------------------------------------
 
 def gerar_mensagem_alto(**info) -> str:
-    if OPENAI_API_KEY:
-        openai.api_key = OPENAI_API_KEY
+    if client:
         prompt = (
             "Crie um texto curto para o time de vendas explicando por que o lead "
             "a seguir é de alta qualificação, citando os pontos principais.\n"
             f"{info}"
         )
         try:
-            resp = openai.ChatCompletion.create(
+            resp = client.chat.completions.create(
                 model=OPENAI_MODEL,
                 messages=[{"role": "user", "content": prompt}],
                 max_tokens=120,
@@ -188,7 +189,7 @@ async def webhook(request: Request):
     }
     notion_resp = requests.post(NOTION_API_URL, headers=headers, json=notion_payload)
 
-    # --- Se for Alto, dispara alerta no WhatsApp ----------------------
+        # --- Se for Alto, dispara alerta no WhatsApp ----------------------
     if nivel == "Alto":
         mensagem = gerar_mensagem_alto(
             nome=nome,
