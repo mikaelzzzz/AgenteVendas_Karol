@@ -29,7 +29,7 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 OPENAI_MODEL   = os.getenv("OPENAI_MODEL", "gpt-3.5-turbo")
 
 # Cliente OpenAI (SDK >=1.0)
-client = OpenAI(api_key=OPENAI_API_KEY) if OPENAI_API_KEY else None
+client = OpenAI() if OPENAI_API_KEY else None
 
 app = FastAPI()
 
