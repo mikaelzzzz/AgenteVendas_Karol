@@ -1,9 +1,9 @@
 import os
-import openai
+from openai import AsyncOpenAI
 from typing import Dict
 
-# Configurar a API key do OpenAI
-openai.api_key = os.getenv("OPENAI_API_KEY")
+# Configurar o cliente OpenAI
+client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 async def generate_sales_message(lead_data: Dict) -> str:
     """
@@ -42,7 +42,7 @@ async def generate_sales_message(lead_data: Dict) -> str:
     """
     
     try:
-        response = await openai.ChatCompletion.acreate(
+        response = await client.chat.completions.create(
             model="gpt-4",
             messages=[
                 {"role": "system", "content": "Você é um analista de vendas especializado em escolas de inglês."},

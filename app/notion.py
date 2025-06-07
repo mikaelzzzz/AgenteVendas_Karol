@@ -9,6 +9,17 @@ HEADERS = {
     "Notion-Version": "2022-06-28"
 }
 
+async def get_database_properties():
+    """Busca todas as propriedades do database do Notion"""
+    async with httpx.AsyncClient(timeout=10) as c:
+        response = await c.get(
+            f"https://api.notion.com/v1/databases/{DB_ID}",
+            headers=HEADERS
+        )
+        if response.status_code == 200:
+            return response.json().get("properties", {})
+        return None
+
 async def get_page_properties(page_id: str):
     """Busca todas as propriedades de uma página do Notion"""
     async with httpx.AsyncClient(timeout=10) as c:
@@ -20,26 +31,44 @@ async def get_page_properties(page_id: str):
 
 async def upsert_page(uid, title, start, name, email, meet):
     """Cria ou atualiza uma página no Notion"""
+    # Busca as propriedades do database para garantir que estamos usando os tipos corretos
+    db_properties = await get_database_properties()
+    if not db_properties:
+        raise Exception("Não foi possível obter as propriedades do database")
+
     # Converte a data UTC para objeto datetime
     dt = datetime.fromisoformat(start.replace("Z", "+00:00"))
     # Formata a data no padrão brasileiro
     formatted_date = dt.strftime("%d-%m-%Y às %H:%M")
     
+    # Inicializa as propriedades básicas que sabemos que existem
+    properties = {
+        "Cliente": {"title": [{"text": {"content": name}}]},
+        "Email": {"email": email},
+        "Status": {"select": {"name": "Agendado reunião"}},
+        "Data Agendada pelo Lead": {"rich_text": [{"text": {"content": formatted_date}}]},
+    }
+    
+    # Adiciona outras propriedades baseadas no schema do database
+    text_properties = ["Telefone", "Profissão", "Objetivo", "Histórico Inglês", 
+                      "Real Motivação", "Idade", "Indicação"]
+    
+    for prop_name in text_properties:
+        if prop_name in db_properties:
+            prop_type = db_properties[prop_name]["type"]
+            if prop_type == "rich_text":
+                properties[prop_name] = {"rich_text": [{"text": {"content": ""}}]}
+            elif prop_type == "select":
+                properties[prop_name] = {"select": None}
+            elif prop_type == "multi_select":
+                properties[prop_name] = {"multi_select": []}
+            elif prop_type == "number":
+                properties[prop_name] = {"number": None}
+            # Adicione outros tipos conforme necessário
+    
     body = {
         "parent": {"database_id": DB_ID},
-        "properties": {
-            "Cliente": {"title": [{"text": {"content": name}}]},
-            "Email": {"email": email},
-            "Status": {"select": {"name": "Agendado reunião"}},
-            "Data Agendada pelo Lead": {"rich_text": [{"text": {"content": formatted_date}}]},
-            "Telefone": {"rich_text": [{"text": {"content": ""}}]},  # Será preenchido manualmente
-            "Profissão": {"rich_text": [{"text": {"content": ""}}]},  # Será preenchido manualmente
-            "Objetivo": {"rich_text": [{"text": {"content": ""}}]},  # Será preenchido manualmente
-            "Histórico Inglês": {"rich_text": [{"text": {"content": ""}}]},  # Será preenchido manualmente
-            "Real Motivação": {"rich_text": [{"text": {"content": ""}}]},  # Será preenchido manualmente
-            "Idade": {"rich_text": [{"text": {"content": ""}}]},  # Será preenchido manualmente
-            "Indicação": {"rich_text": [{"text": {"content": ""}}]}  # Será preenchido manualmente
-        }
+        "properties": properties
     }
     
     async with httpx.AsyncClient(timeout=10) as c:
