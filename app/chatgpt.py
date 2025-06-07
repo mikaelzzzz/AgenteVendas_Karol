@@ -3,7 +3,10 @@ from openai import AsyncOpenAI
 from typing import Dict
 
 # Configurar o cliente OpenAI
-client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+client = AsyncOpenAI(
+    api_key=os.getenv("OPENAI_API_KEY"),
+    base_url="https://api.openai.com/v1"  # Especificando a URL base explicitamente
+)
 
 async def generate_sales_message(lead_data: Dict) -> str:
     """
