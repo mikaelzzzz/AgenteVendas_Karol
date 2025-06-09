@@ -1,44 +1,41 @@
-# AgendaKarol - Sistema de Integração de Agendamentos
+# Sistema de Integração Cal.com, Notion, ChatGPT e WhatsApp
 
-Sistema de integração entre Cal.com, Notion, WhatsApp e ChatGPT para gerenciamento automatizado de agendamentos.
+Este sistema integra várias plataformas para gerenciar agendamentos e comunicações automaticamente:
 
 ## Funcionalidades
 
-- Integração com Cal.com para captura de agendamentos
-- Sincronização automática com banco de dados Notion
-- Notificações automáticas via WhatsApp (Z-API)
-- Análise de leads com ChatGPT
-- Sistema de lembretes automáticos
-- Link fixo do Zoom para reuniões
+- **Integração Cal.com**: Recebe webhooks de eventos de agendamento
+- **Integração Notion**: Atualiza banco de dados com detalhes dos agendamentos
+- **Integração WhatsApp**: Envia notificações via Z-API
+- **Integração ChatGPT**: Gera mensagens personalizadas para a equipe de vendas
+- **Link Zoom Fixo**: Utiliza um link Zoom predefinido para todas as reuniões
+- **Lembretes Automáticos**: Envia lembretes 1 hora antes das reuniões
 
 ## Requisitos
 
 - Python 3.11+
-- FastAPI
-- Notion API
-- Z-API (WhatsApp)
-- OpenAI API
-- APScheduler
+- Dependências listadas em `requirements.txt`
 
 ## Variáveis de Ambiente
 
+Crie um arquivo `.env` com as seguintes variáveis:
+
 ```env
-CAL_SECRET=seu_secret_do_cal
-NOTION_TOKEN=seu_token_do_notion
+CAL_SECRET=seu_secret_cal
+NOTION_TOKEN=seu_token_notion
 NOTION_DB=seu_database_id
-ZAPI_INSTANCE=sua_instancia_zapi
-ZAPI_TOKEN=seu_token_zapi
-ZAPI_CLIENT_TOKEN=seu_client_token_zapi
-OPENAI_API_KEY=sua_chave_api_openai
-PORT=8000
+ZAPI_INSTANCE=seu_instance_id
+ZAPI_TOKEN=seu_token
+ZAPI_CLIENT_TOKEN=seu_client_token
+OPENAI_API_KEY=sua_chave_api
 ```
 
 ## Instalação
 
 1. Clone o repositório
 ```bash
-git clone https://github.com/mikaelzzzz/AgendaKarol.git
-cd AgendaKarol
+git clone [URL_DO_REPOSITORIO]
+cd [NOME_DO_REPOSITORIO]
 ```
 
 2. Instale as dependências
@@ -46,11 +43,11 @@ cd AgendaKarol
 pip install -r requirements.txt
 ```
 
-3. Configure as variáveis de ambiente em um arquivo `.env`
+3. Configure as variáveis de ambiente no arquivo `.env`
 
-4. Execute o servidor
+4. Execute a aplicação
 ```bash
-uvicorn app.main:app --host 0.0.0.0 --port 8000
+uvicorn app.main:app --reload
 ```
 
 ## Estrutura do Projeto
@@ -66,16 +63,12 @@ app/
 
 ## Endpoints
 
-- `POST /webhook`: Recebe webhooks do Cal.com
-  - Processa eventos BOOKING_CREATED, BOOKING_RESCHEDULED e BOOKING_CANCELLED
-  - Atualiza Notion
-  - Envia notificações WhatsApp
-  - Agenda lembretes
+- `/webhook`: Recebe webhooks do Cal.com para eventos de agendamento
 
-## Deploy
+## Contribuição
 
-O projeto está configurado para deploy no Render.com como um Web Service.
-
-## Licença
-
-Este projeto é privado e de uso exclusivo autorizado. 
+1. Faça um Fork do projeto
+2. Crie uma branch para sua feature (`git checkout -b feature/AmazingFeature`)
+3. Commit suas mudanças (`git commit -m 'Add some AmazingFeature'`)
+4. Push para a branch (`git push origin feature/AmazingFeature`)
+5. Abra um Pull Request 

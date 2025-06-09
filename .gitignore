@@ -25,22 +25,12 @@ venv/
 env/
 ENV/
 
-# Environment Variables
+# Environment variables
 .env
-.env.local
-.env.*.local
-
-# IDE
-.idea/
-.vscode/
-*.swp
-*.swo
 
 # Logs
 *.log
-logs/
-log/
 
-# System
+# System Files
 .DS_Store
 Thumbs.db 
