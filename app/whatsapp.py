@@ -171,8 +171,7 @@ async def notify_booking(name: str, start_time: str, meet_link: str, notion_data
             lead_message = (
                 f"Olá, {name}! 👋\n\n"
                 f"✅ Sua reunião está confirmada para *{dt.strftime('%d/%m')}* às *{dt.strftime('%H:%M')}*.\n\n"
-                "🖥️ Sala da reunião (Zoom):\n"
-                f"👉 {meet_link}\n\n"
+                "🖥️ Acesse a sala da reunião no link abaixo 👇\n\n"
                 "Antes disso, que tal fazer nosso teste de nivelamento?\n"
                 "👉 https://student.flexge.com/v2/placement/karollinyeloica\n"
                 "Faça o teste sem pressa, no seu tempo, ok? 😉\n\n"
