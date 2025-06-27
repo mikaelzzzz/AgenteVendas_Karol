@@ -145,7 +145,6 @@ async def webhook(request: Request):
     email           = data.get("email")          # opcional
     whatsapp        = data.get("whatsapp")
     profissao       = data.get("profissao")
-    idade           = data.get("idade")
     indicacao       = data.get("indicacao")
     motivo          = data.get("motivo")
     historico       = data.get("historico")
