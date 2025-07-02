@@ -75,7 +75,7 @@ async def upsert_page(uid, title, start, name, email, meet):
         "Telefone": {"rich_text": [{"text": {"content": uid}}]},
     }
     
-    # Adiciona outras propriedades baseadas no schema do database
+    # Adiciona outras propriedades baseadas no schema do db
     text_properties = ["Profissão", "Objetivo", "Histórico Inglês", 
                       "Real Motivação", "Idade", "Indicação"]
     
