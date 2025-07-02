@@ -76,7 +76,14 @@ async def send_message(phone: str, message: str) -> dict:
         else:
             raise Exception(f"Erro ao enviar mensagem WhatsApp: {str(e)}")
 
-async def send_link_message(phone: str, message: str, link_url: str, title: str = "Reunião Zoom", description: str = "Link para a reunião") -> dict:
+async def send_link_message(
+    phone: str,
+    message: str,
+    link_url: str,
+    title: str = "Reunião Zoom",
+    description: str = "Link para a reunião",
+    add_link_to_message: bool = True,
+) -> dict:
     """
     Envia uma mensagem com link clicável via WhatsApp usando a Z-API.
     
@@ -86,6 +93,7 @@ async def send_link_message(phone: str, message: str, link_url: str, title: str 
         link_url (str): URL do link
         title (str): Título do link
         description (str): Descrição do link
+        add_link_to_message (bool): Adiciona o link ao final da mensagem
         
     Returns:
         dict: Resposta da API contendo zaapId, messageId e id
@@ -96,12 +104,15 @@ async def send_link_message(phone: str, message: str, link_url: str, title: str 
     clean_phone = ''.join(filter(str.isdigit, phone))
     logger.debug(f"Número formatado: {clean_phone}")
     
+    # Define a mensagem a ser enviada, evitando duplicação do link se já estiver no corpo
+    full_message = f"{message}\n{link_url}" if add_link_to_message else message
+    
     # Endpoint para envio de link
     url = f"{BASE_URL}/send-link"
     
     payload = {
         "phone": clean_phone,
-        "message": f"{message}\n{link_url}",  # Inclui o link no final da mensagem
+        "message": full_message,
         "image": "https://zoom.us/favicon.ico",  # Ícone do Zoom
         "linkUrl": link_url,
         "title": title,
@@ -158,16 +169,22 @@ async def notify_booking(name: str, start_time: str, meet_link: str, notion_data
         if lead_phone:
             logger.info(f"Enviando mensagem para o lead: {lead_phone}")
             lead_message = (
-                f"Olá, {name}, passando para lembrar da nossa reunião hoje "
-                f"{dt.strftime('%d-%m')} às {dt.strftime('%H:%M')}.\n\n"
-                "Clique no link abaixo para acessar a reunião:"
+                f"Olá, {name}! 👋\n\n"
+                f"✅ Sua reunião está confirmada para *{dt.strftime('%d/%m')}* às *{dt.strftime('%H:%M')}*.\n\n"
+                "🖥️ Acesse a sala da reunião no link abaixo 👇\n\n"
+                "Antes disso, que tal fazer nosso teste de nivelamento?\n"
+                "👉 https://student.flexge.com/v2/placement/karollinyeloica\n"
+                "Faça o teste sem pressa, no seu tempo, ok? 😉\n\n"
+                "Aproveite e assista a este vídeo para entender por que nosso método é diferenciado!\n"
+                "👉 https://www.youtube.com/watch?v=gjNVofHX6gg\n"
             )
             await send_link_message(
                 phone=lead_phone,
                 message=lead_message,
                 link_url=meet_link,
                 title="Reunião Zoom",
-                description=f"Reunião agendada para {formatted_date}"
+                description=f"Reunião agendada para {formatted_date}",
+                add_link_to_message=False,
             )
             logger.info("Mensagem enviada com sucesso para o lead")
         
