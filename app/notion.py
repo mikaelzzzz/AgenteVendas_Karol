@@ -29,17 +29,42 @@ async def get_page_properties(page_id: str):
         )
         return response.json()
 
+async def update_page(page_id: str, properties: dict):
+    """Atualiza uma página no Notion."""
+    body = {"properties": properties}
+    async with httpx.AsyncClient(timeout=10) as c:
+        response = await c.patch(
+            f"https://api.notion.com/v1/pages/{page_id}",
+            json=body,
+            headers=HEADERS
+        )
+        return response.json()
+
 async def upsert_page(uid, title, start, name, email, meet):
     """Cria ou atualiza uma página no Notion"""
-    # Busca as propriedades do database para garantir que estamos usando os tipos corretos
-    db_properties = await get_database_properties()
-    if not db_properties:
-        raise Exception("Não foi possível obter as propriedades do database")
-
     # Converte a data UTC para objeto datetime
     dt = datetime.fromisoformat(start.replace("Z", "+00:00"))
     # Formata a data no padrão brasileiro
     formatted_date = dt.strftime("%d-%m-%Y às %H:%M")
+
+    # Busca por uma página existente com o número de telefone (uid)
+    search_results = await query_database(filter_property="Telefone", filter_value=uid)
+    
+    if search_results and search_results.get("results"):
+        # Página encontrada, vamos atualizá-la
+        page_id = search_results["results"][0]["id"]
+        properties_to_update = {
+            "Status": {"select": {"name": "Agendado reunião"}},
+            "Email": {"email": email},
+            "Data Agendada pelo Lead": {"rich_text": [{"text": {"content": formatted_date}}]},
+        }
+        return await update_page(page_id, properties_to_update)
+    
+    # Página não encontrada, vamos criar uma nova
+    # Busca as propriedades do database para garantir que estamos usando os tipos corretos
+    db_properties = await get_database_properties()
+    if not db_properties:
+        raise Exception("Não foi possível obter as propriedades do database")
     
     # Inicializa as propriedades básicas que sabemos que existem
     properties = {
@@ -47,14 +72,15 @@ async def upsert_page(uid, title, start, name, email, meet):
         "Email": {"email": email},
         "Status": {"select": {"name": "Agendado reunião"}},
         "Data Agendada pelo Lead": {"rich_text": [{"text": {"content": formatted_date}}]},
+        "Telefone": {"rich_text": [{"text": {"content": uid}}]},
     }
     
     # Adiciona outras propriedades baseadas no schema do database
-    text_properties = ["Telefone", "Profissão", "Objetivo", "Histórico Inglês", 
+    text_properties = ["Profissão", "Objetivo", "Histórico Inglês", 
                       "Real Motivação", "Idade", "Indicação"]
     
     for prop_name in text_properties:
-        if prop_name in db_properties:
+        if prop_name in db_properties and prop_name not in properties:
             prop_type = db_properties[prop_name]["type"]
             if prop_type == "rich_text":
                 properties[prop_name] = {"rich_text": [{"text": {"content": ""}}]}
